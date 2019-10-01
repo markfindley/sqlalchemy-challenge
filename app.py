@@ -43,7 +43,6 @@ def index():
            f"/api/v1.0/averagetempsbystartandenddate"
     )
     
-
 # Convert the query results to a Dictionary using date as the key and prcp as the value.
 # Return the JSON representation of your dictionary.
 @app.route("/api/v1.0/precipitation")
@@ -118,19 +117,19 @@ def tobs():
 
 # # Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range.
 # # When given the start only, calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start date.
-@app.route("/api/v1.0/averagetempsbystartdate")
-def start(start):
+@app.route("/api/v1.0/averagetempsbystartdate/<date_string>")
+def start(date_string):
 
     session = Session(engine)
 
     min_temp = session.query(min(Measurement.tobs)).\
-        filter(Measurement.date >= 'start').all()
+        filter(Measurement.date >= 'date_string').all()
 
     max_temp = session.query(max(Measurement.tobs)).\
-        filter(Measurement.date >= 'start').all()
+        filter(Measurement.date >= 'date_string').all()
 
-    avg_temp = session.query(avg(Measurement.tobs)).\
-        filter(Measurement.date >= 'start').all()                
+    # avg_temp = session.query(avg(Measurement.tobs)).\
+    #     filter(Measurement.date >= 'date_string').all()                
 
     session.close()      
 
@@ -138,9 +137,24 @@ def start(start):
            f"Here are the temperatures:<br/>"
            f"The minimum temperature is: {min_temp}<br/>"
            f"The maximumum temperature is: {max_temp}<br/>"
-           f"The average temperature is: {avg_temp}<br/>"
+        #    f"The average temperature is: {avg_temp}<br/>"
     )
+
+def to_date(date_string): 
+    try:
+        return datetime.datetime.strptime(dateString, "%Y-%m-%d").date()
+    except ValueError:
+        raise ValueError('{} is not valid date in the format YYYY-MM-DD'.format(date_string))
+
+@app.route()
+def event():
+    try:
+        ektempo = to_date(request.args.get('start', default = datetime.date.today().isoformat()))
+    except ValueError as ex:
+        return jsonify({'error': str(ex)}), 400   # jsonify, if this is a json api    
        
+# engine.execute('select avg(tobs), min(tobs), max(tobs) from Measurement where date >= "2017-08-23"').fetchall()
+# [(80.25, 76.0, 82.0)]       
 
 # # When given the start and the end date, calculate the TMIN, TAVG, and TMAX for dates between the start and end date inclusive.
 # @app.route("/api/v1.0/averagetempsbystartandenddate")
